@@ -103,3 +103,25 @@ class FlujoPuestosTests(TestCase):
             respuesta = self.client.post(url, datos)
         self.assertEqual(respuesta.status_code, 429)
         self.assertIn("Retry-After", respuesta.headers)
+
+    def test_registro_publico_crea_solo_un_vendedor(self):
+        login = reverse("login")
+        registro = reverse("crear_cuenta")
+        self.assertContains(self.client.get(login), "Regístrate como vendedor")
+        datos = {
+            "username": "nuevo-vendedor",
+            "password1": "Bambu-sol-2749",
+            "password2": "Bambu-sol-2749",
+            "is_superuser": "true",
+            "grupo": "Inspector",
+        }
+        self.assertRedirects(self.client.post(registro, datos), login)
+        usuario = User.objects.get(username=datos["username"])
+        self.assertEqual(list(usuario.groups.values_list("name", flat=True)), ["Vendedor"])
+        self.assertFalse(usuario.is_staff)
+        self.assertFalse(usuario.is_superuser)
+        self.assertContains(self.client.post(registro, datos), "Ya existe un usuario con este nombre.")
+        self.assertRedirects(self.client.post(login, {
+            "username": datos["username"], "password": datos["password1"],
+        }), reverse("lista"))
+        self.assertContains(self.client.get(reverse("lista")), "Registrar puesto")

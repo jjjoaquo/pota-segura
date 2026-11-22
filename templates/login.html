@@ -5,6 +5,7 @@
   <a class="brand" href="{% url 'lista' %}">Pota Segura</a>
   <h1 id="titulo-acceso">Iniciar sesión</h1>
   <p class="muted">Accede a tu cuenta</p>
+  {% for mensaje in messages %}<p class="confirmacion" role="status">{{ mensaje }}</p>{% endfor %}
   {% if limite_alcanzado %}
   <p class="alerta" role="alert"><span aria-hidden="true">!</span> Alcanzaste el límite de intentos. Espera unos minutos y vuelve a intentarlo.</p>
   {% elif form.errors %}
@@ -28,5 +29,6 @@
     <button type="submit">Ingresar</button>
     <p class="estado-formulario" role="status"></p>
   </form>
+  <p class="registro-enlace">¿Vendes ceviche? <a href="{% url 'crear_cuenta' %}">Regístrate como vendedor</a>.</p>
 </section>
 {% endblock %}

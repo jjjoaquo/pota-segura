@@ -122,3 +122,7 @@ main > section.login-panel { max-width: 29rem; margin: 1rem auto 3rem; padding: 
 .error-busqueda { grid-column: 1 / -1; }
 .hero .error-busqueda { color: #80261f; margin: 0; }
 .paginacion { width: 100%; justify-content: flex-start; margin-top: .75rem; }
+
+.login-panel .registro-enlace { margin: 1rem 0 0; }
+.login-panel .helptext { color: var(--muted); font-size: .875rem; }
+.confirmacion { color: #184c2c; background: #dcefe0; padding: .7rem; border-radius: .65rem; }

@@ -53,3 +53,10 @@ CSRF_COOKIE_SECURE = not DEBUG
 
 POTA_FUENTE_DATOS = os.getenv("POTA_FUENTE_DATOS", "")
 POTA_CONTACTO_EMAIL = os.getenv("POTA_CONTACTO_EMAIL", "")
+
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]

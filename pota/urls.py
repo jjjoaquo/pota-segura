@@ -3,11 +3,12 @@ from django.contrib.auth import views as auth
 from django.urls import path
 
 from puestos import views
-from puestos.acceso import Acceso
+from puestos.acceso import Acceso, crear_cuenta
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("login/", Acceso.as_view(), name="login"),
+    path("registro/", crear_cuenta, name="crear_cuenta"),
     path("logout/", auth.LogoutView.as_view(), name="logout"),
     path("", views.lista, name="lista"),
     path("api/puestos/", views.buscar_api, name="buscar_api"),
