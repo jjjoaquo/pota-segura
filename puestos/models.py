@@ -34,3 +34,9 @@ class Inspeccion(models.Model):
 
     class Meta:
         ordering = ["-fecha", "-pk"]
+
+
+class IntentosAcceso(models.Model):
+    identificador = models.CharField(max_length=64, primary_key=True)
+    vence = models.DateTimeField(db_index=True)
+    cantidad = models.PositiveIntegerField(default=0)

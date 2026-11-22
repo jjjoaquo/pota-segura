@@ -3,10 +3,11 @@ from django.contrib.auth import views as auth
 from django.urls import path
 
 from puestos import views
+from puestos.acceso import Acceso
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("login/", auth.LoginView.as_view(template_name="login.html"), name="login"),
+    path("login/", Acceso.as_view(), name="login"),
     path("logout/", auth.LogoutView.as_view(), name="logout"),
     path("", views.lista, name="lista"),
     path("puestos/nuevo/", views.registrar, name="registrar"),

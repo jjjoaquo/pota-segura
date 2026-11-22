@@ -56,3 +56,29 @@ if (buscador) {
     }
   });
 }
+
+const acceso = document.querySelector("[data-acceso]");
+if (acceso) {
+  const contrasena = acceso.elements.password;
+  const mostrar = acceso.querySelector("[data-mostrar]");
+  const ingresar = acceso.querySelector("[type=submit]");
+  const aviso = acceso.querySelector('[role="status"]');
+  mostrar.hidden = false;
+  mostrar.addEventListener("click", () => {
+    const visible = contrasena.type === "text";
+    contrasena.type = visible ? "password" : "text";
+    mostrar.firstChild.textContent = visible ? "Mostrar" : "Ocultar";
+  });
+  acceso.addEventListener("submit", () => {
+    ingresar.disabled = true;
+    ingresar.textContent = "Ingresando…";
+    aviso.textContent = "Verificando tus datos.";
+  });
+  window.addEventListener("pageshow", (evento) => {
+    if (evento.persisted) {
+      ingresar.disabled = false;
+      ingresar.textContent = "Ingresar";
+      aviso.textContent = "";
+    }
+  });
+}
