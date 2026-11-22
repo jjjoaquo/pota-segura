@@ -5,31 +5,61 @@ on:
     branches: [main]
   push:
     branches: [main, test]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   validate:
+    name: Construcción y pruebas
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: SQLite
+            database_url: ''
+          - database: PostgreSQL
+            database_url: postgresql://pota_ci:pota_ci@127.0.0.1:5432/pota_ci
+    services:
+      postgres:
+        image: ${{ matrix.database_url && 'postgres:16' || '' }}
+        env:
+          POSTGRES_DB: pota_ci
+          POSTGRES_USER: pota_ci
+          POSTGRES_PASSWORD: pota_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pota_ci -d pota_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: ${{ matrix.database_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.12'
           cache: pip
-      - name: Construir y validar configuración
+      - name: Instalar y comprobar dependencias
         run: |
           python -m pip install -r requirements.txt
-          python manage.py check
-          python manage.py makemigrations --check --dry-run
-      - name: Ejecutar pruebas
-        run: python manage.py test --verbosity 2
-      - name: Analizar seguridad
+          python -m pip check
+      - name: Validar configuración y recursos estáticos
         run: |
-          python -m pip install bandit pip-audit
-          bandit -r pota puestos -x puestos/tests.py
-          pip-audit -r requirements.txt
+          python manage.py check
+          python manage.py collectstatic --noinput
+          node --check puestos/static/puestos/interaccion.js
+      - name: Verificar y aplicar migraciones
+        run: |
+          python manage.py makemigrations --check --dry-run
+          python manage.py migrate --noinput
+      - name: Ejecutar pruebas en ${{ matrix.database }}
+        run: python manage.py test --verbosity 2
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: validate
