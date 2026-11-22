@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Consulta de puestos de ceviche</h1>
+<form method="get">
+<label for="q">Nombre o distrito</label><input id="q" name="q" value="{{ consulta }}">
+<label for="producto">Producto declarado</label><select id="producto" name="producto">
+<option value="">Todos</option>{% for opcion in productos %}<option{% if opcion == producto %} selected{% endif %}>{{ opcion }}</option>{% endfor %}
+</select><button>Buscar</button>
+</form>
+{% if es_vendedor %}
+<section><h2>Mis puestos</h2><a href="{% url 'registrar' %}">Registrar puesto</a>
+<ul>{% for puesto in propios %}<li><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></li>{% empty %}<li>Aún no tienes puestos.</li>{% endfor %}</ul></section>
+{% endif %}
+{% if es_inspector and pendientes %}<section><h2>Puestos registrados sin declaración</h2><ul>
+{% for puesto in pendientes %}<li><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></li>{% endfor %}</ul></section>{% endif %}
+{% for puesto in puestos %}<article><h2><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></h2>
+<p>{{ puesto.distrito }} · {{ puesto.declaracion.producto }}</p></article>{% empty %}<p>No hay puestos para esta búsqueda.</p>{% endfor %}
+{% endblock %}

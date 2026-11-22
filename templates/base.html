@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Pota Segura{% endblock %}</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f8f7;color:#152e2b;font:1rem/1.55 system-ui,sans-serif}
+header{background:#123d36;color:#fff}nav,main{max-width:58rem;margin:auto;padding:1.15rem}
+nav{display:flex;align-items:center;justify-content:space-between;gap:1rem}nav a{color:#fff}
+main{padding-block:2rem}h1{line-height:1.15}a{color:#075f51;text-underline-offset:.16em}
+section,article{background:#fff;border:1px solid #dce8e4;border-radius:.75rem;padding:1.15rem;margin-block:1rem}
+label{display:block;font-weight:600}input,select,textarea,button{font:inherit;padding:.45rem .65rem;border:1px solid #8daaa3;border-radius:.35rem;max-width:100%}
+button{background:#075f51;color:white;cursor:pointer}nav form{margin:0}nav button{background:transparent}
+</style>
+<header><nav><a href="{% url 'lista' %}"><strong>Pota Segura</strong></a>
+{% if user.is_authenticated %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>Cerrar sesión</button></form>
+{% else %}<a href="{% url 'login' %}">Iniciar sesión</a>{% endif %}</nav></header>
+<main>{% block content %}{% endblock %}</main>
+</html>

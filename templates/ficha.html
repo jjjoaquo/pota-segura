@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ puesto.nombre }}</h1><p>{{ puesto.distrito }}</p>
+<section><h2>Declarado por el vendedor</h2>
+{% if puesto.declaracion %}<p>{{ puesto.declaracion.producto }}</p>
+<p>Ingrediente principal: {{ puesto.declaracion.ingrediente_principal }}</p>
+{% if puesto.declaracion.otros_ingredientes %}<p>Otros ingredientes: {{ puesto.declaracion.otros_ingredientes }}</p>{% endif %}
+{% else %}<p>Sin declaración registrada.</p>{% endif %}
+{% if titular %}<a href="{% url 'declarar' puesto.pk %}">Editar declaración</a>{% endif %}</section>
+<section><h2>Última inspección registrada</h2>
+{% if visita %}<p>{{ visita.fecha|date:"d/m/Y H:i" }}</p><p>Licencia: {{ visita.get_licencia_display }}</p><p>{{ visita.observaciones }}</p>
+{% else %}<p>Sin inspección registrada</p>{% endif %}
+{% if inspector %}<a href="{% url 'inspeccionar' puesto.pk %}">Registrar inspección</a> · <a href="{% url 'historial' puesto.pk %}">Ver historial</a>{% endif %}</section>
+{% endblock %}
