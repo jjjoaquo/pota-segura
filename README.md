@@ -58,4 +58,6 @@ Puedes volver a ejecutar el seed. Los puestos se identifican con el prefijo «De
 
 En **Iniciar sesión → Regístrate como vendedor**, se crean cuentas con el grupo Vendedor. El administrador asigna el grupo Inspector a cuentas autorizadas.
 
-Para cargar los puestos ficticios en el servicio de demostración de Render, ejecuta `python manage.py seed_puestos` desde el Shell del servicio, con `DATABASE_URL` configurada. Si tu plan no ofrece Shell, añade temporalmente `python manage.py seed_puestos &&` entre `python manage.py crear_roles &&` y `gunicorn` en **Start Command**. Tras el primer despliegue exitoso, restaura el comando original para que el arranque habitual no recalcule las fechas de las inspecciones ficticias. En la portada aparecerán accesos por distrito cuando haya puestos publicados.
+Para cargar los puestos ficticios en el servicio de demostración de Render, ejecuta `python manage.py seed_puestos` desde el Shell del servicio, con `DATABASE_URL` configurada. Si tu plan no ofrece Shell, añade temporalmente `python manage.py seed_puestos &&` entre `python manage.py crear_roles &&` y `gunicorn` en **Start Command**. Tras el primer despliegue exitoso, restaura el comando original para que el arranque habitual no recalcule las fechas de las inspecciones ficticias. El selector de distrito de la portada se llena con los puestos publicados.
+
+Los usuarios con sesión pueden reportar un puesto desde su ficha. El equipo revisa los reportes en el administrador de Django.

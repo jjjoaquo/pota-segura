@@ -68,7 +68,11 @@ class FormularioRegistro(UserCreationForm):
         self.fields["username"].label = "Usuario"
         self.fields["password1"].label = "Contraseña"
         self.fields["password2"].label = "Confirma tu contraseña"
-        self.fields["username"].widget.attrs["autocomplete"] = "username"
+        self.fields["username"].widget.attrs.update({
+            "autocomplete": "username", "placeholder": "Ej. cevichesdelpuerto",
+        })
+        self.fields["username"].help_text = "Usa letras, números o los símbolos @ . + - _."
+        self.fields["password2"].help_text = "Vuelve a escribir la misma contraseña."
 
 
 @require_http_methods(["GET", "POST"])

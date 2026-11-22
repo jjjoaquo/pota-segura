@@ -11,6 +11,9 @@ class Puesto(models.Model):
     latitud = models.FloatField(null=True, blank=True, validators=[MinValueValidator(-90), MaxValueValidator(90)])
     longitud = models.FloatField(null=True, blank=True, validators=[MinValueValidator(-180), MaxValueValidator(180)])
 
+    def __str__(self):
+        return f"{self.nombre} · {self.distrito}"
+
 
 class Declaracion(models.Model):
     puesto = models.OneToOneField(Puesto, on_delete=models.CASCADE)

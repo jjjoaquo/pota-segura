@@ -135,3 +135,9 @@ main > section.login-panel { max-width: 29rem; margin: 1rem auto 3rem; padding: 
 .ficha-columnas h2 { margin: 0 0 .65rem; }
 .ficha-inspeccion dt { font-weight: 700; }
 .ficha-inspeccion dd { margin: 0 0 .6rem; overflow-wrap: anywhere; }
+
+.registro-form button { margin-top: 1rem; }
+.registro-form .helptext ul { margin: .4rem 0 0; padding-inline-start: 1.25rem; }
+.registro-form .errorlist { color: #80261f; margin: .45rem 0; padding-inline-start: 1.25rem; }
+.convocatoria { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+.convocatoria h2, .convocatoria p { margin: 0; }

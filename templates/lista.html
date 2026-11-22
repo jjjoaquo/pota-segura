@@ -57,6 +57,12 @@
   <p class="muted fuente">{% if fuente %}Datos de {{ fuente }}{% else %}Datos registrados en Pota Segura · Fuente oficial pendiente de confirmar{% endif %}{% if ultima_actualizacion %} · Última inspección registrada el {{ ultima_actualizacion|date:"d/m/Y" }}{% endif %}</p>
   <div id="lista-resultados" aria-live="polite" aria-busy="false">{% include "resultados.html" %}</div>
 </section>
+{% if not user.is_authenticated %}
+<section class="convocatoria">
+  <div><h2>¿Vendes ceviche?</h2><p>Registra tu puesto y publica los ingredientes que ofreces.</p></div>
+  <a class="button" href="{% url 'crear_cuenta' %}">Crear cuenta de vendedor</a>
+</section>
+{% endif %}
 <section id="como-funciona">
   <h2>Cómo funciona</h2>
   <ol><li>Busca un puesto por nombre, distrito o ingrediente.</li><li>Revisa qué declaró el vendedor y el estado de la última inspección.</li><li>Abre la ficha para consultar los detalles registrados.</li></ol>
