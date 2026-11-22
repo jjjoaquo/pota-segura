@@ -63,3 +63,5 @@ En **Iniciar sesión → Regístrate como vendedor**, se crean cuentas con el gr
 Para cargar los puestos ficticios en el servicio de demostración de Render, ejecuta `python manage.py seed_puestos` desde el Shell del servicio, con `DATABASE_URL` configurada. Si tu plan no ofrece Shell, añade temporalmente `python manage.py seed_puestos &&` entre `python manage.py crear_roles &&` y `gunicorn` en **Start Command**. Tras el primer despliegue exitoso, restaura el comando original para que el arranque habitual no recalcule las fechas de las inspecciones ficticias. El selector de distrito de la portada se llena con los puestos publicados.
 
 Los usuarios con sesión pueden reportar un puesto desde su ficha. El equipo revisa los reportes en el administrador de Django.
+
+El pipeline valida los workflows con actionlint y exige un mínimo de 82 % de cobertura de líneas y ramas en ambas bases. Una prueba de arranque levanta Gunicorn con `POTA_DEBUG=0`, simula el proxy HTTPS y comprueba la portada, la API, los archivos estáticos y la cookie CSRF. Después del despliegue se repiten las comprobaciones HTTP contra Render, una vez confirmada la revisión.
