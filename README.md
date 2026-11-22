@@ -28,7 +28,9 @@ Crea una base PostgreSQL y un servicio web Python vinculado a `main`. Configura 
 - Comando de inicio: `python manage.py migrate --noinput && python manage.py crear_roles && gunicorn pota.wsgi:application --bind 0.0.0.0:$PORT`.
 - Ruta de salud: `/health/`.
 - Crea las cuentas de demostración en el entorno de producción con el administrador.
-- Desactiva el despliegue automático si GitHub Actions controlará el despliegue. Guarda la URL del hook como secreto `RENDER_DEPLOY_HOOK`. Comprueba en Render que el despliegue termina y verifica la URL HTTPS.
+- Configura el servicio para usar `main` y desactiva **Auto-Deploy** si GitHub Actions controla el despliegue.
+- En **GitHub → Settings → Secrets and variables → Actions**, guarda el hook como secreto `RENDER_DEPLOY_HOOK` y la URL pública HTTPS como variable `RENDER_PUBLIC_URL`. También puedes definirlos dentro del entorno `production`.
+- GitHub Actions ejecuta construcción y pruebas en SQLite y PostgreSQL, además de Bandit, pip-audit y Gitleaks. En `main`, solicita el despliegue tras pasar todas las comprobaciones. Consulta `/health/` hasta que la base de datos responda y `revision` coincida con el commit esperado. Puedes reintentar desde **Actions → Validación y despliegue → Run workflow**, seleccionando `main`.
 
 Trabaja en `test` y abre pull requests hacia `main`. En el informe incluye el PR, los resultados de validación y el estado final en Render.
 

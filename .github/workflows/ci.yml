@@ -5,42 +5,143 @@ on:
     branches: [main]
   push:
     branches: [main, test]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   validate:
+    name: Construcción y pruebas (${{ matrix.database }})
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: SQLite
+            database_url: sqlite:///ci.sqlite3
+          - database: PostgreSQL
+            database_url: postgresql://pota_ci:pota_ci@127.0.0.1:5432/pota_ci
+    services:
+      postgres:
+        image: ${{ matrix.database == 'PostgreSQL' && 'postgres:16' || '' }}
+        env:
+          POSTGRES_DB: pota_ci
+          POSTGRES_USER: pota_ci
+          POSTGRES_PASSWORD: pota_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pota_ci -d pota_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: ${{ matrix.database_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.12'
           cache: pip
-      - name: Construir y validar configuración
+      - name: Instalar y comprobar dependencias
         run: |
           python -m pip install -r requirements.txt
-          python manage.py check
-          python manage.py makemigrations --check --dry-run
-      - name: Ejecutar pruebas
-        run: python manage.py test --verbosity 2
-      - name: Analizar seguridad
+          python -m pip check
+      - name: Validar configuración y recursos estáticos
         run: |
-          python -m pip install bandit pip-audit
-          bandit -r pota puestos -x puestos/tests.py
-          pip-audit -r requirements.txt
-  deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: validate
+          python manage.py check
+          python manage.py collectstatic --noinput
+          node --check puestos/static/puestos/interaccion.js
+      - name: Verificar y aplicar migraciones
+        run: |
+          python manage.py makemigrations --check --dry-run
+          python manage.py migrate --noinput
+      - name: Ejecutar pruebas en ${{ matrix.database }}
+        run: python manage.py test --verbosity 2
+  security:
+    name: Análisis de seguridad
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Detectar secretos en Git
+        uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc # v2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
+          GITLEAKS_ENABLE_SUMMARY: 'false'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Instalar herramientas de análisis
+        run: python -m pip install bandit==1.9.4 pip-audit==2.10.1
+      - name: Analizar el código con Bandit
+        run: bandit -r pota puestos -x puestos/tests.py,puestos/test_busqueda.py
+      - name: Auditar dependencias con pip-audit
+        run: pip-audit -r requirements.txt
+  deploy:
+    name: Despliegue verificado en Render
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [validate, security]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment:
+      name: production
+      url: ${{ vars.RENDER_PUBLIC_URL }}
+    concurrency:
+      group: pota-segura-render-production
+      cancel-in-progress: false
+    steps:
+      - name: Comprobar la revisión de main
+        id: revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          actual=$(gh api "repos/$GITHUB_REPOSITORY/branches/main" --jq '.commit.sha')
+          if [[ "$actual" == "$GITHUB_SHA" ]]; then
+            echo "actual=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::main avanzó a otro commit; se omite esta revisión."
+          fi
       - name: Solicitar despliegue en Render
+        if: steps.revision.outputs.actual == 'true'
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+          RENDER_PUBLIC_URL: ${{ vars.RENDER_PUBLIC_URL }}
         run: |
-          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
-            echo "::error::Configura el secreto RENDER_DEPLOY_HOOK."
+          if [[ "$RENDER_DEPLOY_HOOK" != https://api.render.com/deploy/* ]]; then
+            echo "::error::Configura el secreto RENDER_DEPLOY_HOOK con el hook del servicio."
             exit 1
           fi
-          curl --fail --silent --show-error --output /dev/null --max-time 30 "$RENDER_DEPLOY_HOOK"
+          if [[ "$RENDER_PUBLIC_URL" != https://* ]]; then
+            echo "::error::Configura RENDER_PUBLIC_URL con la URL pública HTTPS del servicio."
+            exit 1
+          fi
+          if ! curl --fail --silent --output /dev/null --max-time 30 "$RENDER_DEPLOY_HOOK"; then
+            echo "::error::Render no aceptó la solicitud. Revisa el hook y los eventos del servicio."
+            exit 1
+          fi
+      - name: Esperar la revisión desplegada y comprobar su salud
+        if: steps.revision.outputs.actual == 'true'
+        env:
+          RENDER_PUBLIC_URL: ${{ vars.RENDER_PUBLIC_URL }}
+        run: |
+          salud="${RENDER_PUBLIC_URL%/}/health/"
+          limite=$((SECONDS + 540))
+          while (( SECONDS < limite )); do
+            if curl --fail --silent --max-time 10 "$salud" |
+              jq -e --arg revision "$GITHUB_SHA" '.estado == "ok" and .revision == $revision' > /dev/null; then
+              echo "Render sirve la revisión $GITHUB_SHA y la base de datos responde."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::Render no confirmó la revisión esperada. Revisa sus eventos y verifica que el servicio use main."
+          exit 1

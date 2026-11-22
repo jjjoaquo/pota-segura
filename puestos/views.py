@@ -9,6 +9,7 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
 from .busqueda import buscar, parametros, puestos_publicados, serializar
@@ -160,9 +161,15 @@ def historial(request, pk):
     return render(request, "historial.html", {"puesto": puesto, "visitas": puesto.inspecciones.all()})
 
 
+@never_cache
 def salud(request):
-    connection.ensure_connection()
-    return JsonResponse({"estado": "ok"})
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+    estado = {"estado": "ok"}
+    if settings.POTA_REVISION:
+        estado["revision"] = settings.POTA_REVISION
+    return JsonResponse(estado)
 
 
 def informacion(request, tema):
