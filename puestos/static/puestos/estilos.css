@@ -79,7 +79,7 @@ nav { flex-wrap: wrap; padding-block: .65rem; }
 button[hidden], [hidden] { display: none; }
 button:disabled { opacity: .7; cursor: wait; }
 .hero .estado-formulario { margin: 0; grid-column: 1 / -1; color: var(--ink); }
-.estado-formulario:empty { display: none; }
+.estado-formulario:empty { margin: 0; }
 .leyenda { margin-top: 1rem; }
 .leyenda summary { cursor: pointer; min-height: 44px; display: list-item; padding-block: .5rem; }
 .leyenda p { margin: .7rem 0 0; }
@@ -118,4 +118,3 @@ main > section.login-panel { max-width: 29rem; margin: 1rem auto 3rem; padding: 
 .opciones-acceso input[type=checkbox] { width: 1.05rem; min-height: auto; height: 1.05rem; accent-color: var(--green); }
 .alerta { border: 1px solid #c88a80; border-radius: .65rem; padding: .7rem; background: #fcebe8; color: #80261f; }
 .alerta span { font-weight: 850; margin-right: .3rem; }
-.solo-lectores { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

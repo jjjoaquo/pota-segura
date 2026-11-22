@@ -67,7 +67,8 @@ if (acceso) {
   mostrar.addEventListener("click", () => {
     const visible = contrasena.type === "text";
     contrasena.type = visible ? "password" : "text";
-    mostrar.firstChild.textContent = visible ? "Mostrar" : "Ocultar";
+    mostrar.textContent = visible ? "Mostrar" : "Ocultar";
+    mostrar.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
   });
   acceso.addEventListener("submit", () => {
     ingresar.disabled = true;

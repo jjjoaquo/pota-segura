@@ -65,3 +65,41 @@ class FlujoPuestosTests(TestCase):
         self.assertContains(self.client.get(reverse("lista"), {
             "q": "Callao", "producto": "Ceviche de pota",
         }), "Costa")
+
+    def test_consulta_inicial_y_filtros_de_inspeccion(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        url = reverse("lista")
+        self.assertContains(self.client.get(url), "Busca por distrito o nombre para empezar")
+        self.assertNotContains(self.client.get(url), "Sin resultados.")
+        self.assertContains(self.client.get(url, {"q": "Cusco"}), "Sin resultados.")
+        Declaracion.objects.create(
+            puesto=self.puesto, producto="Ceviche", ingrediente_principal="Pota",
+        )
+        Inspeccion.objects.create(
+            puesto=self.puesto, inspector=self.inspector, licencia="presentada",
+            observaciones="Visita registrada", vigente_hasta=timezone.localdate() + timedelta(days=5),
+        )
+        self.assertContains(self.client.get(url, {
+            "ingrediente": "pota", "estado": "por-vencer",
+        }), "Ver detalle de Costa")
+        self.assertNotContains(self.client.get(url, {
+            "estado": "vigente",
+        }), "Ver detalle de Costa")
+
+    def test_limite_de_intentos_del_acceso(self):
+        from unittest.mock import patch
+
+        from django.utils import timezone
+
+        url = reverse("login")
+        self.assertNotContains(self.client.get(url), "Usuario o contraseña incorrectos")
+        datos = {"username": "titular", "password": "incorrecta"}
+        with patch("puestos.acceso.timezone.now", return_value=timezone.now()):
+            for _ in range(8):
+                self.assertContains(self.client.post(url, datos), "Usuario o contraseña incorrectos")
+            respuesta = self.client.post(url, datos)
+        self.assertEqual(respuesta.status_code, 429)
+        self.assertIn("Retry-After", respuesta.headers)
