@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -6,6 +7,9 @@ class Puesto(models.Model):
     vendedor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     nombre = models.CharField(max_length=100)
     distrito = models.CharField(max_length=80)
+    direccion = models.CharField(max_length=200, blank=True)
+    latitud = models.FloatField(null=True, blank=True, validators=[MinValueValidator(-90), MaxValueValidator(90)])
+    longitud = models.FloatField(null=True, blank=True, validators=[MinValueValidator(-180), MaxValueValidator(180)])
 
 
 class Declaracion(models.Model):
@@ -25,6 +29,8 @@ class Inspeccion(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
     licencia = models.CharField(max_length=20, choices=Licencia.choices)
     observaciones = models.TextField(max_length=1000)
+    vigente_hasta = models.DateField(null=True, blank=True)
+    hallazgos_pendientes = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-fecha", "-pk"]
