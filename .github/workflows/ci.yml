@@ -87,16 +87,61 @@ jobs:
       - name: Auditar dependencias con pip-audit
         run: pip-audit -r requirements.txt
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: Despliegue verificado en Render
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: [validate, security]
     runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment:
+      name: production
+      url: ${{ vars.RENDER_PUBLIC_URL }}
+    concurrency:
+      group: pota-segura-render-production
+      cancel-in-progress: false
     steps:
+      - name: Comprobar la revisión de main
+        id: revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          actual=$(gh api "repos/$GITHUB_REPOSITORY/branches/main" --jq '.commit.sha')
+          if [[ "$actual" == "$GITHUB_SHA" ]]; then
+            echo "actual=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::main avanzó a otro commit; se omite esta revisión."
+          fi
       - name: Solicitar despliegue en Render
+        if: steps.revision.outputs.actual == 'true'
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+          RENDER_PUBLIC_URL: ${{ vars.RENDER_PUBLIC_URL }}
         run: |
-          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
-            echo "::error::Configura el secreto RENDER_DEPLOY_HOOK."
+          if [[ "$RENDER_DEPLOY_HOOK" != https://api.render.com/deploy/* ]]; then
+            echo "::error::Configura el secreto RENDER_DEPLOY_HOOK con el hook del servicio."
             exit 1
           fi
-          curl --fail --silent --show-error --output /dev/null --max-time 30 "$RENDER_DEPLOY_HOOK"
+          if [[ "$RENDER_PUBLIC_URL" != https://* ]]; then
+            echo "::error::Configura RENDER_PUBLIC_URL con la URL pública HTTPS del servicio."
+            exit 1
+          fi
+          if ! curl --fail --silent --output /dev/null --max-time 30 "$RENDER_DEPLOY_HOOK"; then
+            echo "::error::Render no aceptó la solicitud. Revisa el hook y los eventos del servicio."
+            exit 1
+          fi
+      - name: Esperar la revisión desplegada y comprobar su salud
+        if: steps.revision.outputs.actual == 'true'
+        env:
+          RENDER_PUBLIC_URL: ${{ vars.RENDER_PUBLIC_URL }}
+        run: |
+          salud="${RENDER_PUBLIC_URL%/}/health/"
+          limite=$((SECONDS + 540))
+          while (( SECONDS < limite )); do
+            if curl --fail --silent --max-time 10 "$salud" |
+              jq -e --arg revision "$GITHUB_SHA" '.estado == "ok" and .revision == $revision' > /dev/null; then
+              echo "Render sirve la revisión $GITHUB_SHA y la base de datos responde."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::Render no confirmó la revisión esperada. Revisa sus eventos y verifica que el servicio use main."
+          exit 1

@@ -140,3 +140,9 @@ class FlujoPuestosTests(TestCase):
         self.assertEqual(reporte.autor, self.otro)
         self.assertFalse(reporte.revisado)
         self.assertNotContains(respuesta, datos["descripcion"])
+
+    def test_salud_informa_revision_en_render(self):
+        with self.settings(POTA_REVISION="revision-prueba"):
+            respuesta = self.client.get(reverse("salud"))
+        self.assertEqual(respuesta.json(), {"estado": "ok", "revision": "revision-prueba"})
+        self.assertIn("no-store", respuesta.headers["Cache-Control"])
