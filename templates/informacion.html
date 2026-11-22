@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }} · Pota Segura{% endblock %}
+{% block content %}
+<h1>{{ titulo }}</h1>
+<section>
+{% if tema == "aviso" %}
+<p>Pota Segura presenta declaraciones de vendedores y registros de inspección. Consulta la fecha y la fuente antes de usar la información. La ficha no certifica la inocuidad de los alimentos.</p>
+{% elif tema == "privacidad" %}
+<p>Las fichas publican el nombre y la ubicación del puesto, su declaración y las observaciones públicas de inspección. Si usas «Cerca de mí», las coordenadas aproximadas se envían en la URL de búsqueda para ordenar los resultados. Puedes limpiar los filtros para quitarlas de la URL actual.</p>
+{% elif tema == "ayuda-de-acceso" %}
+<p>Solicita al administrador de Pota Segura que restablezca tu contraseña.</p>
+{% elif tema == "reportar" %}
+<p>Incluye el nombre y distrito del puesto, la URL de su ficha y el motivo del reporte.</p>
+{% endif %}
+{% if tema == "contacto" or tema == "reportar" or tema == "ayuda-de-acceso" %}
+{% if contacto %}<p><a href="mailto:{{ contacto }}">{{ contacto }}</a></p>
+{% else %}<p>El equipo aún no ha publicado un correo de contacto.</p>{% endif %}
+{% endif %}
+</section>
+<a href="{% url 'lista' %}">Volver al inicio</a>
+{% endblock %}

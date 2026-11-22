@@ -43,7 +43,7 @@ def lista(request):
         puestos.sort(key=lambda puesto: (
             puesto.distancia is None, puesto.distancia if puesto.distancia is not None else 0,
         ))
-    busqueda = bool(consulta or ingrediente or estado in ESTADOS or orden in {"cerca", "reciente"})
+    busqueda = bool(consulta or ingrediente or estado in ESTADOS or orden == "cerca")
     if not busqueda:
         puestos = puestos[:6]
     hoy = timezone.localdate()
@@ -130,3 +130,15 @@ def historial(request, pk):
 def salud(request):
     connection.ensure_connection()
     return JsonResponse({"estado": "ok"})
+
+
+def informacion(request, tema):
+    titulos = {
+        "contacto": "Contacto", "aviso": "Aviso legal", "privacidad": "Política de privacidad",
+        "reportar": "Reportar un puesto", "ayuda-de-acceso": "¿Olvidaste tu contraseña?",
+    }
+    if tema not in titulos:
+        raise Http404
+    return render(request, "informacion.html", {
+        "tema": tema, "titulo": titulos[tema], "contacto": getattr(settings, "POTA_CONTACTO_EMAIL", ""),
+    })

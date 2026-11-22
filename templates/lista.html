@@ -1,22 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="hero" aria-labelledby="titulo">
-  <h1 id="titulo">Consulta de puestos de ceviche</h1>
-  <p>Encuentra puestos por distrito, consulta sus ingredientes declarados y revisa cuándo se registró la última inspección.</p>
-  <form class="search" method="get" aria-label="Buscar puestos">
-    <div>
-      <label for="q">Nombre o distrito</label>
-      <input id="q" name="q" value="{{ consulta }}" placeholder="Ej. Callao">
+  <div class="hero-intro">
+    <div><h1 id="titulo">Consulta de puestos de ceviche</h1>
+      <p>Busca un puesto y revisa qué ingredientes declara y cuándo se registró su última inspección.</p></div>
+    <div class="ceviche" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <form class="search" method="get" aria-label="Buscar puestos" data-busqueda>
+    <div><label for="q">Nombre o distrito</label>
+      <input id="q" name="q" value="{{ consulta }}" placeholder="Ej. Callao" list="distritos">
+      <datalist id="distritos">{% for distrito in distritos %}<option value="{{ distrito }}"></option>{% endfor %}</datalist>
     </div>
-    <div>
-      <label for="producto">Producto declarado</label>
-      <select id="producto" name="producto">
-        <option value="">Todos los productos</option>
-        {% for opcion in productos %}<option{% if opcion == producto %} selected{% endif %}>{{ opcion }}</option>{% endfor %}
+    <div><label for="ingrediente">Ingrediente o pescado</label>
+      <input id="ingrediente" name="ingrediente" value="{{ ingrediente }}" placeholder="Ej. pota"></div>
+    <div><label for="estado">Estado de inspección</label>
+      <select id="estado" name="estado"><option value="">Todos los estados</option>
+        {% for codigo, datos in estados.items %}<option value="{{ codigo }}"{% if estado == codigo %} selected{% endif %}>{{ datos.1 }}</option>{% endfor %}
       </select>
     </div>
-    <button>Buscar puestos</button>
+    <div><label for="orden">Ordenar por</label>
+      <select id="orden" name="orden">
+        <option value="reciente">Inspección más reciente</option>
+        <option value="cerca"{% if orden == "cerca" %} selected{% endif %}>Más cercano</option>
+      </select>
+    </div>
+    {% if origen %}{% load l10n %}<input type="hidden" name="lat" value="{{ origen.0|unlocalize }}"><input type="hidden" name="lon" value="{{ origen.1|unlocalize }}">{% endif %}
+    <div class="acciones">
+      <button>Buscar puestos</button>
+      <button class="secundario" type="button" data-cerca hidden>Cerca de mí</button>
+    </div>
+    <p class="estado-formulario" data-estado role="status"></p>
   </form>
+  <details class="leyenda"><summary>¿Cómo leer los resultados?</summary>
+    <div>{% for codigo, datos in estados.items %}<span class="chip {{ codigo }}"><span aria-hidden="true">{{ datos.0 }}</span> {{ datos.1 }}</span>{% endfor %}</div>
+    <p>«Por vencer» indica que faltan 7 días o menos para la fecha registrada. El estado describe el registro de inspección.</p>
+  </details>
 </section>
 {% if es_vendedor %}
 <section><h2>Mis puestos</h2><a class="button" href="{% url 'registrar' %}">Registrar puesto</a>
@@ -27,27 +45,38 @@
 {% for puesto in pendientes %}<li><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></li>{% endfor %}
 </ul></section>
 {% endif %}
-<section class="results" aria-labelledby="resultados">
-  <h2 id="resultados">{% if consulta or producto %}Resultados de búsqueda{% else %}Puestos publicados{% endif %}</h2>
+<section class="results" id="resultados" aria-labelledby="titulo-resultados">
+  <h2 id="titulo-resultados">{% if busqueda %}Resultados de búsqueda{% else %}Puestos recientes{% endif %}</h2>
+  <p class="muted fuente">{% if fuente %}Datos de {{ fuente }}{% else %}Datos registrados en Pota Segura · Fuente oficial pendiente de confirmar{% endif %}{% if ultima_actualizacion %} · Última inspección registrada el {{ ultima_actualizacion|date:"d/m/Y" }}{% endif %}</p>
   {% if puestos %}
   <div class="cards">
     {% for puesto in puestos %}
     <article>
-      <h3><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></h3>
-      <p class="muted">{{ puesto.distrito }}</p>
-      <p>{{ puesto.declaracion.producto }}</p>
+      <span class="chip {{ puesto.estado }}"><span aria-hidden="true">{{ puesto.icono_estado }}</span> {{ puesto.texto_estado }}</span>
+      <h3>{{ puesto.nombre }}</h3>
+      <p class="muted">{{ puesto.distrito }} · {{ puesto.direccion|default:"Dirección sin registrar" }}</p>
+      <p><strong>{{ puesto.declaracion.producto }}</strong></p>
+      <ul class="ingredientes" aria-label="Ingredientes declarados">{% for nombre in puesto.ingredientes %}<li class="chip">{{ nombre }}</li>{% endfor %}</ul>
+      <p class="muted">Última inspección: {{ puesto.ultima_visita|date:"d/m/Y"|default:"Sin registro" }}</p>
+      {% if puesto.distancia != None %}<p class="muted">{{ puesto.distancia|floatformat:1 }} km en línea recta</p>{% endif %}
+      <a class="button secundario" href="{% url 'ficha' puesto.pk %}" aria-label="Ver detalle de {{ puesto.nombre }}">Ver detalle</a>
     </article>
     {% endfor %}
   </div>
   {% else %}
   <div class="empty">
-    {% if consulta or producto %}
-    <p><strong>No hay puestos para esta búsqueda.</strong> Prueba con otro nombre o distrito.</p>
-    <a href="{% url 'lista' %}">Limpiar filtros</a>
+    {% if busqueda %}
+    <p><strong>Sin resultados.</strong> Prueba otro distrito, revisa lo que escribiste o quita algún filtro.</p>
+    <a class="button secundario" href="{% url 'lista' %}">Limpiar filtros</a>
     {% else %}
-    <p><strong>Aún no hay puestos publicados.</strong> Aquí aparecerán cuando un vendedor registre su declaración.</p>
+    <p><strong>Busca por distrito o nombre para empezar.</strong> Aquí aparecerán los puestos conforme se publiquen.</p>
     {% endif %}
   </div>
   {% endif %}
+</section>
+<section id="como-funciona">
+  <h2>Cómo funciona</h2>
+  <ol><li>Busca un puesto por nombre, distrito o ingrediente.</li><li>Revisa qué declaró el vendedor y el estado de la última inspección.</li><li>Abre la ficha para consultar los detalles registrados.</li></ol>
+  <div class="cifras"><p><strong>{{ total_inspeccionados }}</strong> puestos con inspección registrada</p><p><strong>{{ distritos|length }}</strong> distritos con puestos publicados</p></div>
 </section>
 {% endblock %}
