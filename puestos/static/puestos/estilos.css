@@ -118,3 +118,7 @@ main > section.login-panel { max-width: 29rem; margin: 1rem auto 3rem; padding: 
 .opciones-acceso input[type=checkbox] { width: 1.05rem; min-height: auto; height: 1.05rem; accent-color: var(--green); }
 .alerta { border: 1px solid #c88a80; border-radius: .65rem; padding: .7rem; background: #fcebe8; color: #80261f; }
 .alerta span { font-weight: 850; margin-right: .3rem; }
+
+.error-busqueda { grid-column: 1 / -1; }
+.hero .error-busqueda { color: #80261f; margin: 0; }
+.paginacion { width: 100%; justify-content: flex-start; margin-top: .75rem; }

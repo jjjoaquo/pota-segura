@@ -6,7 +6,7 @@
       <p>Busca un puesto y revisa qué ingredientes declara y cuándo se registró su última inspección.</p></div>
     <div class="ceviche" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   </div>
-  <form class="search" method="get" aria-label="Buscar puestos" data-busqueda>
+  <form class="search" method="get" aria-label="Buscar puestos" data-busqueda data-endpoint="{% url 'buscar_api' %}">
     <div><label for="q">Nombre o distrito</label>
       <input id="q" name="q" value="{{ consulta }}" placeholder="Ej. Callao" list="distritos">
       <datalist id="distritos">{% for distrito in distritos %}<option value="{{ distrito }}"></option>{% endfor %}</datalist>
@@ -30,6 +30,7 @@
       <button class="secundario" type="button" data-cerca hidden>Cerca de mí</button>
     </div>
     <p class="estado-formulario" data-estado role="status"></p>
+    <p class="alerta error-busqueda" data-error role="alert" hidden></p>
   </form>
   <details class="leyenda"><summary>¿Cómo leer los resultados?</summary>
     <div>{% for codigo, datos in estados.items %}<span class="chip {{ codigo }}"><span aria-hidden="true">{{ datos.0 }}</span> {{ datos.1 }}</span>{% endfor %}</div>
@@ -48,7 +49,7 @@
 <section class="results" id="resultados" aria-labelledby="titulo-resultados">
   <h2 id="titulo-resultados">{% if busqueda %}Resultados de búsqueda{% else %}Puestos recientes{% endif %}</h2>
   <p class="muted fuente">{% if fuente %}Datos de {{ fuente }}{% else %}Datos registrados en Pota Segura · Fuente oficial pendiente de confirmar{% endif %}{% if ultima_actualizacion %} · Última inspección registrada el {{ ultima_actualizacion|date:"d/m/Y" }}{% endif %}</p>
-  <div id="lista-resultados">{% include "resultados.html" %}</div>
+  <div id="lista-resultados" aria-live="polite" aria-busy="false">{% include "resultados.html" %}</div>
 </section>
 <section id="como-funciona">
   <h2>Cómo funciona</h2>

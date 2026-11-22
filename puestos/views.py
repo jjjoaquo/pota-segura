@@ -23,7 +23,7 @@ def contexto_resultados(request):
     codigo = 400 if errores else 200
     if not errores:
         try:
-            pagina = buscar(publicados, filtros, origen, numero, inicial=not busqueda)
+            pagina = buscar(publicados, filtros, origen, numero)
         except EmptyPage:
             errores = {"pagina": "La página indicada no existe."}
             codigo = 404

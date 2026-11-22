@@ -62,7 +62,7 @@ def puestos_publicados():
     return Puesto.objects.filter(declaracion__isnull=False)
 
 
-def buscar(publicados, filtros, origen, pagina, inicial=False):
+def buscar(publicados, filtros, origen, pagina):
     ultima = Inspeccion.objects.filter(puesto_id=OuterRef("pk"))
     puestos = publicados.select_related("declaracion").annotate(
         ultima_visita=Subquery(ultima.values("fecha")[:1]),
@@ -95,7 +95,7 @@ def buscar(publicados, filtros, origen, pagina, inicial=False):
         puestos.sort(key=lambda puesto: (
             puesto.distancia is None, puesto.distancia if puesto.distancia is not None else 0,
         ))
-    resultados = Paginator(puestos, 6 if inicial else 10).page(pagina)
+    resultados = Paginator(puestos, 10).page(pagina)
     for puesto in resultados:
         puesto.ingredientes = ingredientes(puesto.declaracion)
         puesto.estado = estado_inspeccion(puesto.ultima_visita, puesto.vencimiento, puesto.hallazgos, hoy)
