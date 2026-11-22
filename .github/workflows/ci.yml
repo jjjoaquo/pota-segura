@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   validate:
-    name: Construcción y pruebas
+    name: Construcción y pruebas (${{ matrix.database }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -20,12 +20,12 @@ jobs:
       matrix:
         include:
           - database: SQLite
-            database_url: ''
+            database_url: sqlite:///ci.sqlite3
           - database: PostgreSQL
             database_url: postgresql://pota_ci:pota_ci@127.0.0.1:5432/pota_ci
     services:
       postgres:
-        image: ${{ matrix.database_url && 'postgres:16' || '' }}
+        image: ${{ matrix.database == 'PostgreSQL' && 'postgres:16' || '' }}
         env:
           POSTGRES_DB: pota_ci
           POSTGRES_USER: pota_ci
