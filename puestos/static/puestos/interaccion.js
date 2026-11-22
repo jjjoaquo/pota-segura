@@ -42,7 +42,7 @@ if (buscador) {
       fragmento.innerHTML = datos.html;
       resultados.replaceChildren(fragmento.content);
       const filtros = url.searchParams;
-      titulo.textContent = ["q", "ingrediente", "producto", "estado", "pagina"].some(
+      titulo.textContent = ["q", "ingrediente", "producto", "distrito", "estado", "pagina"].some(
         (campo) => filtros.get(campo)?.trim(),
       ) || filtros.get("orden") === "cerca" ? "Resultados de búsqueda" : "Puestos recientes";
       if (guardar && url.href !== location.href) history.pushState(null, "", url);

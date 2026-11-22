@@ -18,7 +18,7 @@ def contexto_resultados(request):
     filtros, origen, numero, errores = parametros(request.GET)
     publicados = puestos_publicados()
     total_publicados = publicados.count()
-    busqueda = bool(filtros["q"] or filtros["ingrediente"] or filtros["estado"] or origen or "pagina" in request.GET)
+    busqueda = bool(filtros["q"] or filtros["distrito"] or filtros["ingrediente"] or filtros["estado"] or origen or "pagina" in request.GET)
     pagina = None
     codigo = 400 if errores else 200
     if not errores:

@@ -33,11 +33,12 @@ def parametros(datos):
     filtros = {
         "q": datos.get("q", "").strip(),
         "ingrediente": (datos.get("ingrediente") or datos.get("producto", "")).strip(),
+        "distrito": datos.get("distrito", "").strip(),
         "estado": datos.get("estado", ""),
         "orden": datos.get("orden") or "reciente",
     }
     errores = {}
-    for campo in ("q", "ingrediente"):
+    for campo in ("q", "ingrediente", "distrito"):
         if len(filtros[campo]) > 100:
             errores[campo] = "Escribe como máximo 100 caracteres."
         elif "\x00" in filtros[campo]:
@@ -73,6 +74,9 @@ def buscar(publicados, filtros, origen, pagina):
         texto = filtros["q"].translate(TRADUCCION).lower()
         puestos = puestos.alias(nombre_simple=SinTildes("nombre"), distrito_simple=SinTildes("distrito"))
         puestos = puestos.filter(Q(nombre_simple__contains=texto) | Q(distrito_simple__contains=texto))
+    if filtros["distrito"]:
+        texto = filtros["distrito"].translate(TRADUCCION).lower()
+        puestos = puestos.alias(distrito_simple=SinTildes("distrito")).filter(distrito_simple=texto)
     if filtros["ingrediente"]:
         texto = filtros["ingrediente"].translate(TRADUCCION).lower()
         puestos = puestos.alias(
