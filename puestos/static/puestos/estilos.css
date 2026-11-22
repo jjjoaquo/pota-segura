@@ -128,3 +128,10 @@ main > section.login-panel { max-width: 29rem; margin: 1rem auto 3rem; padding: 
 .confirmacion { color: #184c2c; background: #dcefe0; padding: .7rem; border-radius: .65rem; }
 
 .search { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); }
+
+.ficha-cabecera { background: transparent; border: 0; margin-top: 1rem; }
+.ficha-columnas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 1rem; }
+.ficha-columnas .panel { margin: 0; }
+.ficha-columnas h2 { margin: 0 0 .65rem; }
+.ficha-inspeccion dt { font-weight: 700; }
+.ficha-inspeccion dd { margin: 0 0 .6rem; overflow-wrap: anywhere; }

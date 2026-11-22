@@ -40,3 +40,18 @@ class IntentosAcceso(models.Model):
     identificador = models.CharField(max_length=64, primary_key=True)
     vence = models.DateTimeField(db_index=True)
     cantidad = models.PositiveIntegerField(default=0)
+
+
+class Reporte(models.Model):
+    class Motivo(models.TextChoices):
+        INFORMACION = "informacion", "Información incorrecta"
+        PRODUCTO = "producto", "Producto distinto al declarado"
+        HIGIENE = "higiene", "Observación de higiene"
+        OTRO = "otro", "Otro"
+
+    puesto = models.ForeignKey(Puesto, on_delete=models.PROTECT)
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
+    motivo = models.CharField(max_length=20, choices=Motivo.choices)
+    descripcion = models.TextField(max_length=1000)
+    fecha = models.DateTimeField(auto_now_add=True)
+    revisado = models.BooleanField(default=False)

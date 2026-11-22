@@ -125,3 +125,18 @@ class FlujoPuestosTests(TestCase):
             "username": datos["username"], "password": datos["password1"],
         }), reverse("lista"))
         self.assertContains(self.client.get(reverse("lista")), "Registrar puesto")
+
+    def test_reporte_requiere_acceso_y_queda_pendiente(self):
+        Declaracion.objects.create(
+            puesto=self.puesto, producto="Ceviche de pota", ingrediente_principal="Pota",
+        )
+        url = reverse("reportar_puesto", args=[self.puesto.pk])
+        datos = {"motivo": "informacion", "descripcion": "El horario publicado cambió."}
+        self.assertRedirects(self.client.get(url), f'{reverse("login")}?next={url}')
+        self.client.force_login(self.otro)
+        respuesta = self.client.post(url, datos, follow=True)
+        self.assertContains(respuesta, "Recibimos tu reporte")
+        reporte = self.puesto.reporte_set.get()
+        self.assertEqual(reporte.autor, self.otro)
+        self.assertFalse(reporte.revisado)
+        self.assertNotContains(respuesta, datos["descripcion"])

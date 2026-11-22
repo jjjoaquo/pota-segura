@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Declaracion, Inspeccion, Puesto
+from .models import Declaracion, Inspeccion, Puesto, Reporte
 
 
 class PuestoForm(forms.ModelForm):
@@ -25,3 +25,10 @@ class InspeccionForm(forms.ModelForm):
             "vigente_hasta": "Fecha de vencimiento registrada",
             "hallazgos_pendientes": "Hay observaciones pendientes de resolver",
         }
+
+
+class ReporteForm(forms.ModelForm):
+    class Meta:
+        model = Reporte
+        fields = ["motivo", "descripcion"]
+        labels = {"descripcion": "Describe lo que observaste"}

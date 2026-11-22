@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Reportar puesto · Pota Segura{% endblock %}
+{% block content %}
+<a href="{% url 'ficha' puesto.pk %}">← Volver a la ficha</a>
+<h1>Reportar un puesto</h1>
+<p>{{ puesto.nombre }} · {{ puesto.distrito }}</p>
+<form class="panel field-form" method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button>Enviar reporte</button>
+</form>
+{% endblock %}

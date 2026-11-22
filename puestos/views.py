@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import connection
@@ -7,10 +8,12 @@ from django.db.models import Max
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
+from django.utils import timezone
+from django.views.decorators.http import require_http_methods
 
 from .busqueda import buscar, parametros, puestos_publicados, serializar
-from .consulta import ESTADOS
-from .forms import DeclaracionForm, InspeccionForm, PuestoForm
+from .consulta import ESTADOS, estado_inspeccion, ingredientes
+from .forms import DeclaracionForm, InspeccionForm, PuestoForm, ReporteForm
 from .models import Declaracion, Inspeccion, Puesto
 
 
@@ -83,10 +86,32 @@ def ficha(request, pk):
     inspector = usuario.is_authenticated and usuario.groups.filter(name="Inspector").exists()
     if not (titular or inspector or hasattr(puesto, "declaracion")):
         raise Http404
+    visita = puesto.inspecciones.first()
+    estado = estado_inspeccion(
+        visita.fecha if visita else None, visita.vigente_hasta if visita else None,
+        visita.hallazgos_pendientes if visita else False, timezone.localdate(),
+    )
+    publicado = hasattr(puesto, "declaracion")
     return render(request, "ficha.html", {
-        "puesto": puesto, "titular": titular, "inspector": inspector,
-        "visita": puesto.inspecciones.first(),
+        "puesto": puesto, "titular": titular, "inspector": inspector, "visita": visita,
+        "estado": estado, "indicador": ESTADOS[estado], "publicado": publicado,
+        "ingredientes": ingredientes(puesto.declaracion) if publicado else [],
     })
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def reportar_puesto(request, pk):
+    puesto = get_object_or_404(puestos_publicados(), pk=pk)
+    form = ReporteForm(request.POST if request.method == "POST" else None)
+    if form.is_valid():
+        reporte = form.save(commit=False)
+        reporte.puesto = puesto
+        reporte.autor = request.user
+        reporte.save()
+        messages.success(request, "Recibimos tu reporte. Quedó pendiente de revisión.")
+        return redirect("ficha", pk=pk)
+    return render(request, "reporte.html", {"puesto": puesto, "form": form})
 
 
 @login_required

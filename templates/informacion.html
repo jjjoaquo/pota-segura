@@ -10,7 +10,8 @@
 {% elif tema == "ayuda-de-acceso" %}
 <p>Solicita al administrador de Pota Segura que restablezca tu contraseña.</p>
 {% elif tema == "reportar" %}
-<p>Incluye el nombre y distrito del puesto, la URL de su ficha y el motivo del reporte.</p>
+<p>Busca el puesto, abre su ficha y selecciona «Reportar este puesto». Inicia sesión para enviar el reporte al equipo de revisión.</p>
+<a class="button" href="{% url 'lista' %}">Buscar puestos</a>
 {% endif %}
 {% if tema == "contacto" or tema == "reportar" or tema == "ayuda-de-acceso" %}
 {% if contacto %}<p><a href="mailto:{{ contacto }}">{{ contacto }}</a></p>
