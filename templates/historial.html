@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Inspecciones de {{ puesto.nombre }}</h1>
+{% for visita in visitas %}<article><h2>{{ visita.fecha|date:"d/m/Y H:i" }}</h2><p>{{ visita.get_licencia_display }}</p><p>{{ visita.observaciones }}</p></article>
+{% empty %}<p>Sin inspección registrada</p>{% endfor %}
+<a href="{% url 'ficha' puesto.pk %}">Volver a la ficha</a>
+{% endblock %}

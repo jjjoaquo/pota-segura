@@ -1,0 +1,96 @@
+from datetime import datetime, timezone as utc
+from hashlib import sha256
+
+from django import forms
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.models import Group
+from django.contrib.auth.views import LoginView
+from django.db import IntegrityError, transaction
+from django.db.models import F
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_http_methods
+from django.utils import timezone
+
+from .models import IntentosAcceso
+
+
+class FormularioAcceso(AuthenticationForm):
+    recordarme = forms.BooleanField(required=False, label="Recordarme")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].widget.attrs.update({
+            "placeholder": "Escribe tu usuario", "autocomplete": "username",
+        })
+        self.fields["password"].label = "Contraseña"
+        self.fields["password"].widget.attrs.update({
+            "placeholder": "Escribe tu contraseña", "autocomplete": "current-password",
+            "aria-describedby": "ayuda-contrasena",
+        })
+
+
+class Acceso(LoginView):
+    template_name = "login.html"
+    authentication_form = FormularioAcceso
+
+    def post(self, request, *args, **kwargs):
+        ahora = timezone.now()
+        duracion = 15 * 60
+        ventana = int(ahora.timestamp()) // duracion
+        vence = datetime.fromtimestamp((ventana + 1) * duracion, tz=utc.utc)
+        usuario = request.POST.get("username", "").strip().casefold()[:150]
+        origen = request.META.get("REMOTE_ADDR", "")
+        identificador = sha256(f"{ventana}:{origen}:{usuario}".encode()).hexdigest()
+        IntentosAcceso.objects.filter(vence__lte=ahora).delete()
+        IntentosAcceso.objects.get_or_create(identificador=identificador, defaults={"vence": vence})
+        permitido = IntentosAcceso.objects.filter(
+            identificador=identificador, cantidad__lt=8,
+        ).update(cantidad=F("cantidad") + 1)
+        if not permitido:
+            self.extra_context = {"limite_alcanzado": True}
+            return self.render_to_response(
+                self.get_context_data(form=self.get_form()), status=429,
+                headers={"Retry-After": str(int((vence - ahora).total_seconds()) + 1)},
+            )
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        respuesta = super().form_valid(form)
+        self.request.session.set_expiry(None if form.cleaned_data["recordarme"] else 0)
+        return respuesta
+
+
+class FormularioRegistro(UserCreationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].label = "Usuario"
+        self.fields["password1"].label = "Contraseña"
+        self.fields["password2"].label = "Confirma tu contraseña"
+        self.fields["username"].widget.attrs.update({
+            "autocomplete": "username", "placeholder": "Ej. cevichesdelpuerto",
+        })
+        self.fields["username"].help_text = "Usa letras, números o los símbolos @ . + - _."
+        self.fields["password2"].help_text = "Vuelve a escribir la misma contraseña."
+
+
+@require_http_methods(["GET", "POST"])
+def crear_cuenta(request):
+    if request.user.is_authenticated:
+        return redirect("lista")
+    form = FormularioRegistro(request.POST if request.method == "POST" else None)
+    if form.is_valid():
+        try:
+            with transaction.atomic():
+                vendedor, _ = Group.objects.get_or_create(name="Vendedor")
+                usuario = form.save()
+                usuario.groups.add(vendedor)
+        except IntegrityError:
+            if not get_user_model().objects.filter(username=form.cleaned_data["username"]).exists():
+                raise
+            form.add_error("username", "Este usuario ya está en uso.")
+        else:
+            messages.success(request, "Tu cuenta de vendedor está lista. Inicia sesión para registrar tu puesto.")
+            return redirect("login")
+    return render(request, "registro.html", {"form": form})

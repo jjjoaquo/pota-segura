@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero" aria-labelledby="titulo">
+  <div class="hero-intro">
+    <div><h1 id="titulo">Consulta de puestos de ceviche</h1>
+      <p>Busca un puesto y revisa qué ingredientes declara y cuándo se registró su última inspección.</p></div>
+    <div class="ceviche" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <form class="search" method="get" aria-label="Buscar puestos" data-busqueda data-endpoint="{% url 'buscar_api' %}">
+    <div><label for="q">Nombre o distrito</label>
+      <input id="q" name="q" value="{{ consulta }}" placeholder="Ej. Callao" list="distritos">
+      <datalist id="distritos">{% for distrito in distritos %}<option value="{{ distrito }}"></option>{% endfor %}</datalist>
+    </div>
+    <div><label for="ingrediente">Ingrediente o pescado</label>
+      <input id="ingrediente" name="ingrediente" value="{{ ingrediente }}" placeholder="Ej. pota"></div>
+    <div><label for="distrito">Distrito</label>
+      <select id="distrito" name="distrito"><option value="">Todos los distritos</option>
+        {% for opcion in distritos %}<option value="{{ opcion }}"{% if opcion == distrito %} selected{% endif %}>{{ opcion }}</option>{% endfor %}
+      </select>
+    </div>
+    <div><label for="estado">Estado de inspección</label>
+      <select id="estado" name="estado"><option value="">Todos los estados</option>
+        {% for codigo, datos in estados.items %}<option value="{{ codigo }}"{% if estado == codigo %} selected{% endif %}>{{ datos.1 }}</option>{% endfor %}
+      </select>
+    </div>
+    <div><label for="orden">Ordenar por</label>
+      <select id="orden" name="orden">
+        <option value="reciente">Inspección más reciente</option>
+        <option value="cerca"{% if orden == "cerca" %} selected{% endif %}>Más cercano</option>
+      </select>
+    </div>
+    {% if origen %}{% load l10n %}<input type="hidden" name="lat" value="{{ origen.0|unlocalize }}"><input type="hidden" name="lon" value="{{ origen.1|unlocalize }}">{% endif %}
+    <div class="acciones">
+      <button>Buscar puestos</button>
+      <a class="button secundario" href="{% url 'lista' %}">Limpiar filtros</a>
+      <button class="secundario" type="button" data-cerca hidden>Cerca de mí</button>
+    </div>
+    <p class="estado-formulario" data-estado role="status"></p>
+    <p class="alerta error-busqueda" data-error role="alert" hidden></p>
+  </form>
+  <details class="leyenda"><summary>¿Cómo leer los resultados?</summary>
+    <div>{% for codigo, datos in estados.items %}<span class="chip {{ codigo }}"><span aria-hidden="true">{{ datos.0 }}</span> {{ datos.1 }}</span>{% endfor %}</div>
+    <p>«Por vencer» indica que faltan 7 días o menos para la fecha registrada. El estado describe el registro de inspección.</p>
+  </details>
+</section>
+{% if es_vendedor %}
+<section><h2>Mis puestos</h2><a class="button" href="{% url 'registrar' %}">Registrar puesto</a>
+<ul>{% for puesto in propios %}<li><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></li>{% empty %}<li>Aún no tienes puestos.</li>{% endfor %}</ul></section>
+{% endif %}
+{% if es_inspector and pendientes %}
+<section><h2>Puestos registrados sin declaración</h2><ul>
+{% for puesto in pendientes %}<li><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></li>{% endfor %}
+</ul></section>
+{% endif %}
+<section class="results" id="resultados" aria-labelledby="titulo-resultados">
+  <h2 id="titulo-resultados">{% if busqueda %}Resultados de búsqueda{% else %}Puestos recientes{% endif %}</h2>
+  <p class="muted fuente">{% if fuente %}Datos de {{ fuente }}{% else %}Datos registrados en Pota Segura · Fuente oficial pendiente de confirmar{% endif %}{% if ultima_actualizacion %} · Última inspección registrada el {{ ultima_actualizacion|date:"d/m/Y" }}{% endif %}</p>
+  <div id="lista-resultados" aria-live="polite" aria-busy="false">{% include "resultados.html" %}</div>
+</section>
+{% if not user.is_authenticated %}
+<section class="convocatoria">
+  <div><h2>¿Vendes ceviche?</h2><p>Registra tu puesto y publica los ingredientes que ofreces.</p></div>
+  <a class="button" href="{% url 'crear_cuenta' %}">Crear cuenta de vendedor</a>
+</section>
+{% endif %}
+<section id="como-funciona">
+  <h2>Cómo funciona</h2>
+  <ol><li>Busca un puesto por nombre, distrito o ingrediente.</li><li>Revisa qué declaró el vendedor y el estado de la última inspección.</li><li>Abre la ficha para consultar los detalles registrados.</li></ol>
+  <div class="cifras"><p><strong>{{ total_inspeccionados }}</strong> puestos con inspección registrada</p><p><strong>{{ distritos|length }}</strong> distritos con puestos publicados</p></div>
+</section>
+{% endblock %}

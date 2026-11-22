@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ puesto.nombre }} · Pota Segura{% endblock %}
+{% block content %}
+<a href="{% url 'lista' %}">← Volver a la consulta</a>
+<header class="ficha-cabecera">
+  <h1>{{ puesto.nombre }}</h1>
+  <p class="muted">{{ puesto.distrito }}{% if puesto.direccion %} · {{ puesto.direccion }}{% endif %}</p>
+</header>
+{% for mensaje in messages %}<p class="confirmacion" role="status">{{ mensaje }}</p>{% endfor %}
+<div class="ficha-columnas">
+  <section class="panel">
+    <h2>Declarado por el vendedor</h2>
+    {% if publicado %}
+    <p><strong>{{ puesto.declaracion.producto }}</strong></p>
+    <ul class="ingredientes" aria-label="Ingredientes declarados">
+      {% for ingrediente in ingredientes %}<li class="chip">{{ ingrediente }}</li>{% endfor %}
+    </ul>
+    {% else %}<p>Sin declaración registrada.</p>{% endif %}
+    {% if titular %}<a href="{% url 'declarar' puesto.pk %}">Editar declaración</a>{% endif %}
+  </section>
+  <section class="panel">
+    <h2>Última inspección registrada</h2>
+    <p class="chip {{ estado }}"><span aria-hidden="true">{{ indicador.0 }}</span> {{ indicador.1 }}</p>
+    {% if visita %}
+    <dl class="ficha-inspeccion">
+      <dt>Fecha de la visita</dt><dd>{{ visita.fecha|date:"d/m/Y H:i" }}</dd>
+      <dt>Licencia</dt><dd>{{ visita.get_licencia_display }}</dd>
+      {% if visita.vigente_hasta %}<dt>Vencimiento registrado</dt><dd>{{ visita.vigente_hasta|date:"d/m/Y" }}</dd>{% endif %}
+      <dt>Observaciones</dt><dd>{{ visita.observaciones|linebreaksbr }}</dd>
+    </dl>
+    {% endif %}
+    {% if inspector %}<a href="{% url 'inspeccionar' puesto.pk %}">Registrar inspección</a> · <a href="{% url 'historial' puesto.pk %}">Ver historial</a>{% endif %}
+  </section>
+</div>
+{% if publicado %}
+<section class="panel">
+  <h2>¿Encontraste un dato incorrecto?</h2>
+  <p>Envía un reporte para que el equipo revise la información del puesto.</p>
+  <a class="button secundario" href="{% url 'reportar_puesto' puesto.pk %}">Reportar este puesto</a>
+</section>
+{% endif %}
+{% endblock %}

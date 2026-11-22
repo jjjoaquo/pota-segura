@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Crear cuenta · Pota Segura{% endblock %}
+{% block content %}
+<section class="login-panel" aria-labelledby="titulo-registro">
+  <h1 id="titulo-registro">Crea tu cuenta de vendedor</h1>
+  <p class="muted">Podrás registrar tu puesto y publicar los ingredientes que declaras.</p>
+  {% if form.errors %}<p class="alerta" role="alert">Revisa los campos indicados para continuar.</p>{% endif %}
+  <form method="post" class="registro-form">
+    {% csrf_token %}
+    {% for campo in form %}
+    <div class="campo">
+      {{ campo.label_tag }}
+      {{ campo }}
+      {% if campo.help_text %}<div class="helptext" id="{{ campo.auto_id }}_helptext">{{ campo.help_text|safe }}</div>{% endif %}
+      {{ campo.errors }}
+    </div>
+    {% endfor %}
+    <button type="submit">Crear cuenta</button>
+  </form>
+  <p class="registro-enlace">¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a>.</p>
+</section>
+{% endblock %}

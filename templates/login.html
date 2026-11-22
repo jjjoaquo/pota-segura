@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión · Pota Segura{% endblock %}
+{% block content %}
+<section class="login-panel" aria-labelledby="titulo-acceso">
+  <a class="brand" href="{% url 'lista' %}">Pota Segura</a>
+  <h1 id="titulo-acceso">Iniciar sesión</h1>
+  <p class="muted">Accede a tu cuenta</p>
+  {% for mensaje in messages %}<p class="confirmacion" role="status">{{ mensaje }}</p>{% endfor %}
+  {% if limite_alcanzado %}
+  <p class="alerta" role="alert"><span aria-hidden="true">!</span> Alcanzaste el límite de intentos. Espera unos minutos y vuelve a intentarlo.</p>
+  {% elif form.errors %}
+  <p class="alerta" role="alert"><span aria-hidden="true">!</span> Usuario o contraseña incorrectos</p>
+  {% endif %}
+  <form method="post" data-acceso>
+    {% csrf_token %}
+    <div class="campo">{{ form.username.label_tag }}{{ form.username }}</div>
+    <div class="campo">
+      {{ form.password.label_tag }}
+      <div class="contrasena">{{ form.password }}
+        <button type="button" data-mostrar aria-controls="id_password" aria-label="Mostrar contraseña" hidden>Mostrar</button>
+      </div>
+      <p class="muted ayuda" id="ayuda-contrasena">Revisa que no tengas activadas las mayúsculas.</p>
+    </div>
+    <div class="opciones-acceso">
+      <label for="{{ form.recordarme.id_for_label }}">{{ form.recordarme }} Recordarme</label>
+      <a href="{% url 'informacion' 'ayuda-de-acceso' %}">¿Olvidaste tu contraseña?</a>
+    </div>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit">Ingresar</button>
+    <p class="estado-formulario" role="status"></p>
+  </form>
+  <p class="registro-enlace">¿Vendes ceviche? <a href="{% url 'crear_cuenta' %}">Regístrate como vendedor</a>.</p>
+</section>
+{% endblock %}
