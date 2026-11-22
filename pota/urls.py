@@ -10,6 +10,7 @@ urlpatterns = [
     path("login/", Acceso.as_view(), name="login"),
     path("logout/", auth.LogoutView.as_view(), name="logout"),
     path("", views.lista, name="lista"),
+    path("api/puestos/", views.buscar_api, name="buscar_api"),
     path("puestos/nuevo/", views.registrar, name="registrar"),
     path("puestos/<int:pk>/", views.ficha, name="ficha"),
     path("puestos/<int:pk>/declaracion/", views.declarar, name="declarar"),

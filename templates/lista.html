@@ -48,31 +48,7 @@
 <section class="results" id="resultados" aria-labelledby="titulo-resultados">
   <h2 id="titulo-resultados">{% if busqueda %}Resultados de búsqueda{% else %}Puestos recientes{% endif %}</h2>
   <p class="muted fuente">{% if fuente %}Datos de {{ fuente }}{% else %}Datos registrados en Pota Segura · Fuente oficial pendiente de confirmar{% endif %}{% if ultima_actualizacion %} · Última inspección registrada el {{ ultima_actualizacion|date:"d/m/Y" }}{% endif %}</p>
-  {% if puestos %}
-  <div class="cards">
-    {% for puesto in puestos %}
-    <article>
-      <span class="chip {{ puesto.estado }}"><span aria-hidden="true">{{ puesto.icono_estado }}</span> {{ puesto.texto_estado }}</span>
-      <h3>{{ puesto.nombre }}</h3>
-      <p class="muted">{{ puesto.distrito }} · {{ puesto.direccion|default:"Dirección sin registrar" }}</p>
-      <p><strong>{{ puesto.declaracion.producto }}</strong></p>
-      <ul class="ingredientes" aria-label="Ingredientes declarados">{% for nombre in puesto.ingredientes %}<li class="chip">{{ nombre }}</li>{% endfor %}</ul>
-      <p class="muted">Última inspección: {{ puesto.ultima_visita|date:"d/m/Y"|default:"Sin registro" }}</p>
-      {% if puesto.distancia != None %}<p class="muted">{{ puesto.distancia|floatformat:1 }} km en línea recta</p>{% endif %}
-      <a class="button secundario" href="{% url 'ficha' puesto.pk %}" aria-label="Ver detalle de {{ puesto.nombre }}">Ver detalle</a>
-    </article>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="empty">
-    {% if busqueda %}
-    <p><strong>Sin resultados.</strong> Prueba otro distrito, revisa lo que escribiste o quita algún filtro.</p>
-    <a class="button secundario" href="{% url 'lista' %}">Limpiar filtros</a>
-    {% else %}
-    <p><strong>Busca por distrito o nombre para empezar.</strong> Aquí aparecerán los puestos conforme se publiquen.</p>
-    {% endif %}
-  </div>
-  {% endif %}
+  <div id="lista-resultados">{% include "resultados.html" %}</div>
 </section>
 <section id="como-funciona">
   <h2>Cómo funciona</h2>

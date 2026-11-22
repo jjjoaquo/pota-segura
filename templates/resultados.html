@@ -1,0 +1,37 @@
+  {% if puestos %}
+  <div class="cards">
+    {% for puesto in puestos %}
+    <article>
+      <span class="chip {{ puesto.estado }}"><span aria-hidden="true">{{ puesto.icono_estado }}</span> {{ puesto.texto_estado }}</span>
+      <h3>{{ puesto.nombre }}</h3>
+      <p class="muted">{{ puesto.distrito }} · {{ puesto.direccion|default:"Dirección sin registrar" }}</p>
+      <p><strong>{{ puesto.declaracion.producto }}</strong></p>
+      <ul class="ingredientes" aria-label="Ingredientes declarados">{% for nombre in puesto.ingredientes %}<li class="chip">{{ nombre }}</li>{% endfor %}</ul>
+      <p class="muted">Última inspección: {{ puesto.ultima_visita|date:"d/m/Y"|default:"Sin registro" }}</p>
+      {% if puesto.distancia != None %}<p class="muted">{{ puesto.distancia|floatformat:1 }} km en línea recta</p>{% endif %}
+      <a class="button secundario" href="{% url 'ficha' puesto.pk %}" aria-label="Ver detalle de {{ puesto.nombre }}">Ver detalle</a>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    {% if errores %}
+    <p role="alert"><strong>No pudimos hacer la búsqueda.</strong> {% for mensaje in errores.values %}{{ mensaje }} {% endfor %}</p>
+    <a class="button secundario" href="{% url 'lista' %}">Limpiar filtros</a>
+    {% elif not total_publicados %}
+    <p><strong>Aún no hay puestos publicados.</strong> Busca por distrito o nombre para empezar cuando se publiquen.</p>
+    {% elif busqueda %}
+    <p><strong>Sin resultados.</strong> Prueba otro distrito, revisa lo que escribiste o quita algún filtro.</p>
+    <a class="button secundario" href="{% url 'lista' %}">Limpiar filtros</a>
+    {% else %}
+    <p><strong>Busca por distrito o nombre para empezar.</strong> Aquí aparecerán los puestos conforme se publiquen.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+{% if pagina.has_other_pages %}
+<nav class="paginacion" aria-label="Páginas de resultados">
+  {% if pagina.has_previous %}<a class="button secundario" href="?{{ parametros_url }}{% if parametros_url %}&amp;{% endif %}pagina={{ pagina.previous_page_number }}">Anterior</a>{% endif %}
+  <span>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+  {% if pagina.has_next %}<a class="button secundario" href="?{{ parametros_url }}{% if parametros_url %}&amp;{% endif %}pagina={{ pagina.next_page_number }}">Siguiente</a>{% endif %}
+</nav>
+{% endif %}

@@ -3,7 +3,6 @@ from math import asin, cos, radians, sin, sqrt
 import re
 
 from django.db.models import Q
-from django.utils import timezone
 
 ESTADOS = {
     "vigente": ("✓", "Inspección vigente"),
@@ -29,8 +28,7 @@ def estado_inspeccion(fecha, vencimiento, hallazgos, hoy):
     return "vigente"
 
 
-def filtro_estado(estado):
-    hoy = timezone.localdate()
+def filtro_estado(estado, hoy):
     aviso = hoy + timedelta(days=7)
     sin_hallazgos = Q(ultima_visita__isnull=False, hallazgos=False)
     return {

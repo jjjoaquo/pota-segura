@@ -2,70 +2,78 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import connection
-from django.db.models import F, Max, OuterRef, Q, Subquery
+from django.core.paginator import EmptyPage
+from django.db.models import Max
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
+from django.template.loader import render_to_string
 
-from .consulta import ESTADOS, coordenadas, distancia_km, estado_inspeccion, filtro_estado, ingredientes
+from .busqueda import buscar, parametros, puestos_publicados, serializar
+from .consulta import ESTADOS
 from .forms import DeclaracionForm, InspeccionForm, PuestoForm
 from .models import Declaracion, Inspeccion, Puesto
 
 
+def contexto_resultados(request):
+    filtros, origen, numero, errores = parametros(request.GET)
+    publicados = puestos_publicados()
+    total_publicados = publicados.count()
+    busqueda = bool(filtros["q"] or filtros["ingrediente"] or filtros["estado"] or origen or "pagina" in request.GET)
+    pagina = None
+    codigo = 400 if errores else 200
+    if not errores:
+        try:
+            pagina = buscar(publicados, filtros, origen, numero, inicial=not busqueda)
+        except EmptyPage:
+            errores = {"pagina": "La página indicada no existe."}
+            codigo = 404
+    parametros_url = request.GET.copy()
+    parametros_url.pop("pagina", None)
+    return {
+        **filtros, "consulta": filtros["q"], "puestos": pagina or [], "pagina": pagina,
+        "origen": origen, "busqueda": busqueda, "errores": errores,
+        "total_publicados": total_publicados, "parametros_url": parametros_url.urlencode(),
+    }, codigo
+
+
+def buscar_api(request):
+    if request.method != "GET":
+        respuesta = JsonResponse({
+            "resultados": [], "paginacion": None, "total_publicados": None, "html": None,
+            "errores": {"metodo": "Usa GET para consultar los puestos."},
+        }, status=405)
+        respuesta["Allow"] = "GET"
+        return respuesta
+    contexto, codigo = contexto_resultados(request)
+    pagina = contexto["pagina"]
+    return JsonResponse({
+        "resultados": [serializar(puesto) for puesto in contexto["puestos"]],
+        "paginacion": {
+            "pagina": pagina.number, "paginas": pagina.paginator.num_pages,
+            "total": pagina.paginator.count, "por_pagina": pagina.paginator.per_page,
+        } if pagina is not None else None,
+        "total_publicados": contexto["total_publicados"],
+        "html": render_to_string("resultados.html", contexto) if codigo == 200 else None,
+        "errores": contexto["errores"],
+    }, status=codigo)
+
+
 def lista(request):
-    publicados = Puesto.objects.filter(declaracion__isnull=False)
-    ultima = Inspeccion.objects.filter(puesto_id=OuterRef("pk"))
-    puestos = publicados.select_related("declaracion").annotate(
-        ultima_visita=Subquery(ultima.values("fecha")[:1]),
-        vencimiento=Subquery(ultima.values("vigente_hasta")[:1]),
-        hallazgos=Subquery(ultima.values("hallazgos_pendientes")[:1]),
-    )
-    consulta = request.GET.get("q", "").strip()
-    ingrediente = (request.GET.get("ingrediente") or request.GET.get("producto", "")).strip()
-    estado = request.GET.get("estado", "")
-    orden = request.GET.get("orden", "")
-    origen = coordenadas(request.GET) if orden == "cerca" else None
-    if consulta:
-        puestos = puestos.filter(Q(nombre__icontains=consulta) | Q(distrito__icontains=consulta))
-    if ingrediente:
-        puestos = puestos.filter(
-            Q(declaracion__producto__icontains=ingrediente)
-            | Q(declaracion__ingrediente_principal__icontains=ingrediente)
-            | Q(declaracion__otros_ingredientes__icontains=ingrediente)
-        )
-    if estado in ESTADOS:
-        puestos = puestos.filter(filtro_estado(estado))
-    puestos = puestos.order_by(F("ultima_visita").desc(nulls_last=True), "-pk")
-    if origen:
-        puestos = list(puestos)
-        for puesto in puestos:
-            puesto.distancia = distancia_km(origen, puesto)
-        puestos.sort(key=lambda puesto: (
-            puesto.distancia is None, puesto.distancia if puesto.distancia is not None else 0,
-        ))
-    busqueda = bool(consulta or ingrediente or estado in ESTADOS or orden == "cerca")
-    if not busqueda:
-        puestos = puestos[:6]
-    hoy = timezone.localdate()
-    for puesto in puestos:
-        puesto.ingredientes = ingredientes(puesto.declaracion)
-        puesto.estado = estado_inspeccion(puesto.ultima_visita, puesto.vencimiento, puesto.hallazgos, hoy)
-        puesto.icono_estado, puesto.texto_estado = ESTADOS[puesto.estado]
+    contexto, codigo = contexto_resultados(request)
+    publicados = puestos_publicados()
     distritos = publicados.order_by("distrito").values_list("distrito", flat=True).distinct()
     autenticado = request.user.is_authenticated
     es_inspector = autenticado and request.user.groups.filter(name="Inspector").exists()
     es_vendedor = autenticado and request.user.groups.filter(name="Vendedor").exists()
     return render(request, "lista.html", {
-        "puestos": puestos, "consulta": consulta, "ingrediente": ingrediente,
-        "estados": ESTADOS, "estado": estado, "orden": orden, "origen": origen,
-        "busqueda": busqueda, "distritos": list(distritos),
+        **contexto, "estados": ESTADOS, "distritos": list(distritos),
         "propios": Puesto.objects.filter(vendedor=request.user) if es_vendedor else [],
         "pendientes": Puesto.objects.filter(declaracion__isnull=True) if es_inspector else [],
         "es_inspector": es_inspector, "es_vendedor": es_vendedor,
         "total_inspeccionados": publicados.filter(inspecciones__isnull=False).distinct().count(),
         "ultima_actualizacion": publicados.aggregate(fecha=Max("inspecciones__fecha"))["fecha"],
         "fuente": getattr(settings, "POTA_FUENTE_DATOS", ""),
-    })
+    }, status=codigo)
 
 
 def ficha(request, pk):
