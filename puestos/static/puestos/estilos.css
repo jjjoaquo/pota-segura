@@ -126,3 +126,12 @@ main > section.login-panel { max-width: 29rem; margin: 1rem auto 3rem; padding: 
 .login-panel .registro-enlace { margin: 1rem 0 0; }
 .login-panel .helptext { color: var(--muted); font-size: .875rem; }
 .confirmacion { color: #184c2c; background: #dcefe0; padding: .7rem; border-radius: .65rem; }
+
+.distritos-rapidos { margin-top: 1.2rem; }
+.distritos-rapidos ul { display: flex; flex-wrap: wrap; gap: .4rem; list-style: none; padding: 0; margin: .45rem 0 0; }
+.distritos-rapidos a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: .25rem .75rem;
+  color: #f6fbec; border: 1px solid #91b9a5; border-radius: 999px; text-decoration: none;
+}
+.distritos-rapidos a:hover { background: #285c4b; text-decoration: underline; }
+.distritos-rapidos a:focus-visible { outline-color: #f8e6a9; }

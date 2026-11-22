@@ -32,6 +32,16 @@
     <p class="estado-formulario" data-estado role="status"></p>
     <p class="alerta error-busqueda" data-error role="alert" hidden></p>
   </form>
+  {% if distritos %}
+  <div class="distritos-rapidos" aria-label="Buscar por distrito">
+    <strong>Explora por distrito</strong>
+    <ul>
+      {% for distrito in distritos %}
+      <li><a href="{% url 'lista' %}?q={{ distrito|urlencode }}#resultados">{{ distrito }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
   <details class="leyenda"><summary>¿Cómo leer los resultados?</summary>
     <div>{% for codigo, datos in estados.items %}<span class="chip {{ codigo }}"><span aria-hidden="true">{{ datos.0 }}</span> {{ datos.1 }}</span>{% endfor %}</div>
     <p>«Por vencer» indica que faltan 7 días o menos para la fecha registrada. El estado describe el registro de inspección.</p>

@@ -88,6 +88,10 @@ class BusquedaTests(TestCase):
         for _ in range(2):
             call_command("seed_puestos", stdout=StringIO())
         self.assertEqual(Puesto.objects.filter(nombre__startswith="Demo ·").count(), 10)
+        portada = self.client.get(reverse("lista"))
+        self.assertContains(portada, "Explora por distrito")
+        self.assertContains(portada, "?q=Jes%C3%BAs%20Mar%C3%ADa#resultados")
+        self.assertEqual(self.consultar(q="Jesus Maria")["paginacion"]["total"], 2)
         datos = self.consultar(q="Demo")
         self.assertEqual(datos["paginacion"]["total"], 10)
         self.assertEqual(
