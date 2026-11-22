@@ -1,18 +1,53 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Consulta de puestos de ceviche</h1>
-<form method="get">
-<label for="q">Nombre o distrito</label><input id="q" name="q" value="{{ consulta }}">
-<label for="producto">Producto declarado</label><select id="producto" name="producto">
-<option value="">Todos</option>{% for opcion in productos %}<option{% if opcion == producto %} selected{% endif %}>{{ opcion }}</option>{% endfor %}
-</select><button>Buscar</button>
-</form>
+<section class="hero" aria-labelledby="titulo">
+  <h1 id="titulo">Consulta de puestos de ceviche</h1>
+  <p>Encuentra puestos por distrito, consulta sus ingredientes declarados y revisa cuándo se registró la última inspección.</p>
+  <form class="search" method="get" aria-label="Buscar puestos">
+    <div>
+      <label for="q">Nombre o distrito</label>
+      <input id="q" name="q" value="{{ consulta }}" placeholder="Ej. Callao">
+    </div>
+    <div>
+      <label for="producto">Producto declarado</label>
+      <select id="producto" name="producto">
+        <option value="">Todos los productos</option>
+        {% for opcion in productos %}<option{% if opcion == producto %} selected{% endif %}>{{ opcion }}</option>{% endfor %}
+      </select>
+    </div>
+    <button>Buscar puestos</button>
+  </form>
+</section>
 {% if es_vendedor %}
-<section><h2>Mis puestos</h2><a href="{% url 'registrar' %}">Registrar puesto</a>
+<section><h2>Mis puestos</h2><a class="button" href="{% url 'registrar' %}">Registrar puesto</a>
 <ul>{% for puesto in propios %}<li><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></li>{% empty %}<li>Aún no tienes puestos.</li>{% endfor %}</ul></section>
 {% endif %}
-{% if es_inspector and pendientes %}<section><h2>Puestos registrados sin declaración</h2><ul>
-{% for puesto in pendientes %}<li><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></li>{% endfor %}</ul></section>{% endif %}
-{% for puesto in puestos %}<article><h2><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></h2>
-<p>{{ puesto.distrito }} · {{ puesto.declaracion.producto }}</p></article>{% empty %}<p>No hay puestos para esta búsqueda.</p>{% endfor %}
+{% if es_inspector and pendientes %}
+<section><h2>Puestos registrados sin declaración</h2><ul>
+{% for puesto in pendientes %}<li><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></li>{% endfor %}
+</ul></section>
+{% endif %}
+<section class="results" aria-labelledby="resultados">
+  <h2 id="resultados">{% if consulta or producto %}Resultados de búsqueda{% else %}Puestos publicados{% endif %}</h2>
+  {% if puestos %}
+  <div class="cards">
+    {% for puesto in puestos %}
+    <article>
+      <h3><a href="{% url 'ficha' puesto.pk %}">{{ puesto.nombre }}</a></h3>
+      <p class="muted">{{ puesto.distrito }}</p>
+      <p>{{ puesto.declaracion.producto }}</p>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    {% if consulta or producto %}
+    <p><strong>No hay puestos para esta búsqueda.</strong> Prueba con otro nombre o distrito.</p>
+    <a href="{% url 'lista' %}">Limpiar filtros</a>
+    {% else %}
+    <p><strong>Aún no hay puestos publicados.</strong> Aquí aparecerán cuando un vendedor registre su declaración.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
 {% endblock %}
