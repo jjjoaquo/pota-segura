@@ -41,3 +41,17 @@ La vigencia deriva de la fecha de vencimiento consignada por el inspector. El av
 Configura `POTA_FUENTE_DATOS` cuando se confirme la entidad de origen y `POTA_CONTACTO_EMAIL` para habilitar contacto, reportes por correo y ayuda para el acceso. El enlace de recuperación remite al administrador hasta que se configure un flujo de correo. Los mapas pueden añadirse con Leaflet cuando se disponga de coordenadas verificadas y un proveedor de teselas.
 
 La pantalla pública de acceso admite ocho intentos por usuario y origen en cada ventana de quince minutos. El despliegue de producción usa HTTPS. La verificación en dos pasos queda para una futura integración con un proveedor de identidad.
+
+## API de búsqueda y datos de demostración
+
+`GET /api/puestos/` recibe `q` (nombre o distrito), `ingrediente`, `estado`, `orden` y `pagina`. La búsqueda ignora mayúsculas y las tildes habituales del español. El orden predeterminado es `reciente`. Para `orden=cerca`, envía `lat` y `lon`. La respuesta contiene `resultados`, `paginacion`, `total_publicados`, `html` y `errores`. La página y la API comparten el fragmento HTML de las tarjetas. La API usa 400 para parámetros inválidos, 404 para páginas inexistentes y 405 para métodos distintos de GET.
+
+Para probar con diez puestos e inspecciones ficticios en una base de demostración:
+
+```sh
+python manage.py migrate
+python manage.py seed_puestos
+python manage.py test
+```
+
+Puedes volver a ejecutar el seed. Los puestos se identifican con el prefijo «Demo ·». El comando escribe en la base configurada en `DATABASE_URL` o en SQLite si la variable no está definida.

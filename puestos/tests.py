@@ -74,7 +74,7 @@ class FlujoPuestosTests(TestCase):
         url = reverse("lista")
         self.assertContains(self.client.get(url), "Busca por distrito o nombre para empezar")
         self.assertNotContains(self.client.get(url), "Sin resultados.")
-        self.assertContains(self.client.get(url, {"q": "Cusco"}), "Sin resultados.")
+        self.assertContains(self.client.get(url, {"q": "Cusco"}), "Aún no hay puestos publicados.")
         Declaracion.objects.create(
             puesto=self.puesto, producto="Ceviche", ingrediente_principal="Pota",
         )
